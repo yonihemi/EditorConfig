@@ -12,13 +12,11 @@ A Swift library for working with [editorconfig][editorconfig] files
 - Enforce a limitation on how far up the filesystem the resolution will scan
 - Render `Configuration` structs back into the editorconfig format
 
-As of right now, this library does not handle curly brace expansion inside patterns.
-
 ## Installation
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ChimeHQ/EditorConfig", from: "0.1.0")
+    .package(url: "https://github.com/ChimeHQ/EditorConfig", from: "0.1.1")
 ],
 ```
 
