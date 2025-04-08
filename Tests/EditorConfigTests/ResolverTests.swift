@@ -50,6 +50,31 @@ final class ResolverTests: XCTestCase {
 		XCTAssertTrue(try resolver.matches("abc.js", pattern: "[ab]bc.js"))
 		XCTAssertTrue(try resolver.matches("bbc.js", pattern: "[ab]bc.js"))
 		XCTAssertFalse(try resolver.matches("cbc.js", pattern: "[ab]bc.js"))
+		
+		XCTAssertTrue(try resolver.matches("abc.js", pattern: "*.{js,py}"))
+		XCTAssertTrue(try resolver.matches("abc.py", pattern: "*.{js,py}"))
+		XCTAssertFalse(try resolver.matches("abc.txt", pattern: "*.{js,py}"))
+		
+		XCTAssertTrue(try resolver.matches("abc.js", pattern: "*.{js}"))
+		XCTAssertFalse(try resolver.matches("abc.js", pattern: "*.{js,py"))
+		XCTAssertFalse(try resolver.matches("abc.js", pattern: "*.js,py}"))
+
+		XCTAssertTrue(try resolver.matches(".travis.yml", pattern: "{package.json,.travis.yml}"))
+		XCTAssertFalse(try resolver.matches("config.json", pattern: "{package.json,.travis.yml}"))
+		
+		XCTAssertTrue(try resolver.matches("abc30.js", pattern: "abc{30..40}.js"))
+		XCTAssertTrue(try resolver.matches("abc31.js", pattern: "abc{30..40}.js"))
+		XCTAssertFalse(try resolver.matches("abc31.js", pattern: "abc{40..50}.js"))
+		XCTAssertTrue(try resolver.matches("abc31def.js", pattern: "abc{30..40}def.js"))
+		XCTAssertTrue(try resolver.matches("abc-31.js", pattern: "abc{-40..-30}.js"))
+		
+		XCTAssertTrue(try resolver.matches("abc31.js", pattern: "abc{30..40}.{js,py}"))
+		XCTAssertFalse(try resolver.matches("abc31.js", pattern: "abc{40..50}.{js,py}"))
+		
+		XCTAssertThrowsError(try resolver.matches("abc31.js", pattern: "abc{30..20}.js"))
+		XCTAssertThrowsError(try resolver.matches("abc31.js", pattern: "abc{30..30}.js"))
+		XCTAssertFalse(try resolver.matches("abc31.js", pattern: "abc{30..40.js"))
+		XCTAssertFalse(try resolver.matches("abc31.js", pattern: "abc30..40}.js"))
 	}
 
 	func testResolveSingleNonMatchingFile() throws {

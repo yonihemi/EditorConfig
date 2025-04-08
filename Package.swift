@@ -1,39 +1,29 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 
 import PackageDescription
 
 let package = Package(
 	name: "EditorConfig",
 	platforms: [
-		.macOS(.v10_15),
-		.iOS(.v13),
-		.tvOS(.v13),
-		.watchOS(.v6),
-		.macCatalyst(.v13),
+		.macOS(.v13),
+		.iOS(.v16),
+		.tvOS(.v16),
+		.watchOS(.v9),
+		.macCatalyst(.v16),
 		.visionOS(.v1),
 	],
 	products: [
 		.library(name: "EditorConfig", targets: ["EditorConfig"]),
 	],
 	dependencies: [
-		.package(url: "https://github.com/davbeck/swift-glob", from: "0.0.0"),
+		.package(url: "https://github.com/davbeck/swift-glob", from: "0.1.0"),
 	],
 	targets: [
 		.target(
 			name: "EditorConfig",
-			dependencies: [.product(name: "Glob", package: "swift-glob")]
+			dependencies: [.product(name: "Glob", package: "swift-glob")],
+			swiftSettings: [.swiftLanguageMode(.v6)]
 		),
 		.testTarget(name: "EditorConfigTests", dependencies: ["EditorConfig"]),
 	]
 )
-
-let swiftSettings: [SwiftSetting] = [
-	.enableExperimentalFeature("StrictConcurrency"),
-	.enableUpcomingFeature("DisableOutwardActorInference"),
-]
-
-for target in package.targets {
-	var settings = target.swiftSettings ?? []
-	settings.append(contentsOf: swiftSettings)
-	target.swiftSettings = settings
-}

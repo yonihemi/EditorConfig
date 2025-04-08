@@ -5,6 +5,7 @@ public final class Resolver {
 	enum Failure: Error {
 		case unsupportedURL(URL)
 		case noParentDirectories(URL)
+		case invalidBracesPattern(String)
 	}
 
 	let limitURL: URL?
@@ -77,8 +78,67 @@ public final class Resolver {
 	}
 
 	func matches(_ name: String, pattern: String) throws -> Bool {
-		let patternMatcher = try Glob.Pattern(pattern, options: .default)
-
-		return patternMatcher.match(name)
+		let patterns = try expandPatterns(pattern: pattern)
+		for pattern in patterns {
+			let patternMatcher = try Glob.Pattern(pattern, options: .default)
+			if patternMatcher.match(name) {
+				return true
+			}
+		}
+		return false
+	}
+	
+	private let bracePattern = #/\{([^{}]+)\}/#
+	private func expandPatterns(pattern: String) throws -> [String] {
+		guard let match = pattern.firstMatch(of: bracePattern) else {
+			return [pattern]
+		}
+		
+		let matchRange = match.range
+		let contents = String(match.1)
+		let expansion = try GlobExpansion(subpattern: contents)
+		
+		let expanded = expansion.expandedOptions.map { option in
+			var newPattern = pattern
+			newPattern.replaceSubrange(matchRange, with: option)
+			return newPattern
+		}
+		
+		return try expanded.flatMap { try expandPatterns(pattern: $0) }
+	}
+	
+	enum GlobExpansion {
+		/// `{s1,s2,s3}`
+		/// Matches any of the strings given (separated by commas)
+		case list([String])
+		
+		/// `{num1..num2}`
+		/// Matches any integer numbers between num1 and num2, where num1 and num2 can be either positive or negative
+		case range(ClosedRange<Int>)
+		
+		init(subpattern: String) throws {
+			if subpattern.contains("..") {
+				let components = subpattern.split(separator: "..").map { String($0) }
+				guard components.count == 2,
+					  let start = Int(components[0]),
+					  let end = Int(components[1]),
+					  start < end else {
+					throw Resolver.Failure.invalidBracesPattern(subpattern)
+				}
+				self = .range(start...end)
+			} else {
+				let options = subpattern.split(separator: ",").map { String($0.trimmingCharacters(in: .whitespaces)) }
+				self = .list(options)
+			}
+		}
+		
+		var expandedOptions: [String] {
+			switch self {
+			case let .list(options):
+				options
+			case let .range(range):
+				Array(range).map(String.init)
+			}
+		}
 	}
 }
